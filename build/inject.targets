@@ -1,0 +1,16 @@
+<Project>
+  <!-- Imported into every project of the build (CustomAfterMicrosoftCommonTargets and its
+       cross-targeting twin, set by the Dockerfile), including StackExchange.Redis's own.
+
+       For the library's projects: add net11.0 when the app targets it (the library ships net10.0 as
+       its newest target), and turn runtime async on for that target when RuntimeAsync=on - appended to
+       Features, so the library's own `strict` survives. NU1510 is suppressed because .NET 11 moved
+       Microsoft.Extensions.Logging.Abstractions into the shared framework, which makes the library's
+       explicit reference redundant there, and the library builds with warnings as errors. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'StackExchange.Redis' or '$(MSBuildProjectName)' == 'RESPite'">
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+    <TargetFrameworks Condition="'$(Tfm)' == 'net11.0' and !$(TargetFrameworks.Contains('net11.0'))">$(TargetFrameworks);net11.0</TargetFrameworks>
+    <Features Condition="'$(TargetFramework)' == 'net11.0' and '$(RuntimeAsync)' == 'on' and !$(Features.Contains('runtime-async'))">$(Features);runtime-async=on</Features>
+    <Features Condition="'$(TargetFramework)' == 'net11.0' and '$(RuntimeAsync)' != 'on'">$(Features.Replace(';runtime-async=on', '').Replace('runtime-async=on', ''))</Features>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- -p:Tfm=net11.0 for the .NET 11 rows (a property of our own, so restore and build agree). -->
+    <Tfm Condition="'$(Tfm)' == ''">net10.0</Tfm>
+    <TargetFramework>$(Tfm)</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Server GC, as ASP.NET Core and the SE.Redis benchmarks use; fixed at startup, so set here. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <!-- .NET 11 runtime async for this assembly's own async methods: -p:RuntimeAsync=on (net11.0 only).
+         The runtime's own libraries (CoreLib, Sockets) are runtime-async on .NET 11 regardless. -->
+    <Features Condition="'$(RuntimeAsync)' == 'on'">$(Features);runtime-async=on</Features>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/*.cs" />
+  </ItemGroup>
+
+  <!-- MSBuild's incremental compile does not notice a change to Features, so switching
+       -p:RuntimeAsync would otherwise reuse the previous build. -->
+  <Target Name="RecompileOnFeaturesChange" BeforeTargets="_GenerateCompileDependencyCache">
+    <ItemGroup>
+      <CoreCompileCache Include="$(Features)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The same measured loop as ../Repro, driving StackExchange.Redis against a real Redis.
+
+       StackExchange.Redis is built from source (cloned by the Dockerfile into $(SerRoot)), because
+       runtime async is a property of how each assembly was COMPILED: the NuGet package targets
+       net10.0, so on .NET 11 it would stay state machines whatever the app does. build/inject.targets
+       adds net11.0 to the library's own projects and applies runtime-async=on to them when asked.
+
+       -p:SerMajor=3 or 4 selects the API surface (v4: GetDatabaseContext().Strings, and the optional
+       client-side cache). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Tfm Condition="'$(Tfm)' == ''">net10.0</Tfm>
+    <TargetFramework>$(Tfm)</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <Features Condition="'$(RuntimeAsync)' == 'on'">$(Features);runtime-async=on</Features>
+    <SerMajor Condition="'$(SerMajor)' == ''">4</SerMajor>
+    <DefineConstants Condition="'$(SerMajor)' == '4'">$(DefineConstants);SER_V4</DefineConstants>
+    <!-- v4's context surface and cache are [Experimental] -->
+    <NoWarn>$(NoWarn);SER001;SER002;SER003;SER004;SER005;SER006;SER007;SER008;SER009;SER010;SER011;SER012;SER013;SER014;SER352</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/*.cs" />
+    <ProjectReference Include="$(SerRoot)/src/StackExchange.Redis/StackExchange.Redis.csproj" />
+  </ItemGroup>
+
+  <!-- MSBuild's incremental compile does not notice a change to Features, so switching
+       -p:RuntimeAsync would otherwise reuse the previous build. -->
+  <Target Name="RecompileOnFeaturesChange" BeforeTargets="_GenerateCompileDependencyCache">
+    <ItemGroup>
+      <CoreCompileCache Include="$(Features)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

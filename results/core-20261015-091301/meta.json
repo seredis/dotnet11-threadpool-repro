@@ -1,0 +1,10 @@
+{
+  "experiment": "core",
+  "started": "2026-10-15T09:13:01",
+  "host": "AMD Ryzen 9 7900X 12-Core Processor, kernel 7.1.5-76070105-generic",
+  "server_cpus": "0-3,12-15",
+  "client_cpus": "6-11,18-23",
+  "repeats": 3,
+  "warmup": 3,
+  "duration": 10
+}
