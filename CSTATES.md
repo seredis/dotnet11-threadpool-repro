@@ -46,4 +46,5 @@ Findings:
   64-caller cells within noise. .NET 10 already keeps ~11.5 of 12 cores busy in the work cells
   under every configuration, so there is no parked-thread wake latency for C-states to add.
 
-Posted as a follow-up on the issue after the Windows comment.
+Posted [here](https://github.com/dotnet/runtime/issues/135855#issuecomment-6509023761), as a
+follow-up to the Windows comment.
