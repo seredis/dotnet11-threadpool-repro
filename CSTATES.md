@@ -19,34 +19,31 @@ from a deep state costs latency, and in a ping-pong workload latency gates throu
 - Only "all idle states off" (`IDLEDISABLE=1`) could be tested. `IDLESTATEMAX`, which would keep C1,
   is ignored while Hyper-V is running.
 
-## Linux (popos): to do
+## Linux (popos): done
 
-Same machine, Pop!_OS, kernel 7.1. Run `./run.py core` under three idle configurations, so the C-state
-effect is measured on the OS where the regression shows:
+Same machine, Pop!_OS, kernel 7.2.6, 2026-10-29. Three `./run.py core` runs, one per idle
+configuration. The cpuidle states on this kernel are POLL (0 µs exit latency), C1 (1 µs), ACPI C2
+(18 µs) and C3 (350 µs); `cpupower` lacked the module for this kernel, so states were toggled by
+writing `/sys/devices/system/cpu/cpu*/cpuidle/stateN/disable` directly. Each run's `idle.txt`
+records the configuration, and the `usage` counters of every disabled state were confirmed frozen
+across each run.
 
-1. **default:** all states enabled (a same-day baseline; the 2026-10-15 run was presumably default, but its idle settings were not recorded)
-2. **deep states off, C1 kept:** the configuration VSadov asked about
-3. **all states off (POLL only):** matches the Windows "idle disabled" run
+1. **default** (all states enabled): [results/core-20261029-153912-default](results/core-20261029-153912-default/summary.md)
+2. **C1 only** (C2/C3 disabled): [results/core-20261029-194534-c1only](results/core-20261029-194534-c1only/summary.md)
+3. **POLL only** (C1/C2/C3 disabled): [results/core-20261029-202517-pollonly](results/core-20261029-202517-pollonly/summary.md)
 
-```bash
-cpupower idle-info                    # if missing: sudo apt install linux-tools-common linux-tools-$(uname -r)
-grep . /sys/devices/system/cpu/cpu6/cpuidle/state*/{name,latency}   # state names and exit latency (us)
+Findings:
 
-sudo cpupower idle-set -E && ./run.py core                     # 1. default
-sudo cpupower idle-set -E && sudo cpupower idle-set -D 2 && ./run.py core   # 2. disable states with latency > 2 us
-sudo cpupower idle-set -E && sudo cpupower idle-set -D 0 && ./run.py core   # 3. POLL only
-sudo cpupower idle-set -E                                       # restore
-```
+- **Idle states do not explain the Linux regression.** The RC2 deficit vs .NET 10 is the same in
+  all three configurations: 5 µs cell −34.3% / −34.0% / −34.6%; 20 µs cell −20.6% / −19.8% / −21.2%;
+  78%-hits cell −29.2% / −29.0% / −30.2%. RC1 likewise (5 µs: −42.4% / −40.2% / −38.4%).
+- The default run reproduces the 2026-10-15 numbers almost exactly (.NET 10 at 1,029k ops/s and
+  11.6 busy in the 5 µs cell, RC2 at 677k and 7.9), so the original results were a default-idle
+  baseline in practice.
+- Unlike Windows, where `IDLEDISABLE` gave .NET 10 +10% (5 µs) and +29% (1 caller), on Linux
+  disabling C-states never helps: C1-only is a wash everywhere, and POLL-only *costs* ~18% at
+  1 caller for every runtime (.NET 10 55.8k → 45.6k, RC2 52.8k → 43.7k) while leaving the
+  64-caller cells within noise. .NET 10 already keeps ~11.5 of 12 cores busy in the work cells
+  under every configuration, so there is no parked-thread wake latency for C-states to add.
 
-Check the `-D` threshold against the latencies listed: configuration 2 should leave POLL and C1
-enabled and disable everything deeper (on Zen 4, ACPI C2 is the deep CC6 state). `cpupower idle-set`
-without `cpupower` installed: write `1` to `/sys/devices/system/cpu/cpu*/cpuidle/stateN/disable`.
-
-`run.py` does not record idle state, so for each run save the configuration next to its results
-(`cpupower idle-info > results/core-<timestamp>/idle.txt`) and rename the directory to say which
-configuration it is (e.g. `core-20261030-...-c1only`). Confirm each setting took effect: the `usage`
-counter of a disabled state in `/sys/devices/system/cpu/cpu6/cpuidle/stateN/usage` should not move
-during a run.
-
-Each `core` run takes about 30 minutes. Then draft the Linux numbers as a follow-up for the issue,
-compared with .NET 10 under the same idle configuration, like the Windows comment.
+Posted as a follow-up on the issue after the Windows comment.
