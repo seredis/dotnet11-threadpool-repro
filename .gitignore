@@ -2,3 +2,4 @@ bin/
 obj/
 /ser/
 __pycache__/
+/artifacts/

@@ -1,0 +1,13 @@
+{
+  "experiment": "cstates-windows",
+  "started": "2026-10-29T14:41:27",
+  "host": "AMD Ryzen 9 7900X 12-Core Processor, Windows 11 Pro 10.0.26340, native (no containers), Hyper-V on",
+  "server_cpus": "cores 0-3 (affinity 0xFF)",
+  "client_cpus": "cores 6-11 (affinity 0xFFF000)",
+  "idle_modes": {"deep idle on (default)": "powercfg IDLEDISABLE=0", "idle disabled": "powercfg IDLEDISABLE=1 (all idle states off; the CPU polls)"},
+  "build": "net11.0 compiled with SDK 11.0.100-preview.7.26381.103, runtime async off, rolled forward onto each RC runtime",
+  "driver": "tools/cstates-windows.py",
+  "repeats": 3,
+  "warmup": 3,
+  "duration": 10
+}

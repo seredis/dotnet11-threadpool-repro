@@ -175,3 +175,4 @@ Each client run prints one JSON line. Pin the server and the client to different
 | `build/inject.targets` | Builds StackExchange.Redis from source for net11.0, with runtime async on or off. |
 | `Dockerfile`, `run.py` | One image per row, built on the pinned SDK image of the runtime under test; the grid runner. |
 | `results/` | The runs quoted above. |
+| `CSTATES.md`, `tools/cstates-windows.py` | Whether idle states (C-states) explain the regression: a native Windows run with them on and off, and the Linux runs to do. |
